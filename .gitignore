@@ -1,0 +1,6 @@
+.venv
+local_cache
+vector-store
+
+.env
+*.log
