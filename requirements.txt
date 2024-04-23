@@ -3,3 +3,10 @@ jinja2==3.1.3
 structlog==24.1.0
 chromadb==0.4.24
 langchain==0.1.15
+
+# add for 2-rag-langchain
+langchain-openai==0.1.3
+langchain-chroma==0.1.0
+
+# add for 1-rag-chroma
+openai==1.23.2

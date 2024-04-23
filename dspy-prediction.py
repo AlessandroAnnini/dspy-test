@@ -10,8 +10,50 @@ from dspy.evaluate.evaluate import Evaluate
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 # Set up the LM
-gpt3_turbo = dspy.OpenAI(model="gpt-3.5-turbo", max_tokens=300, api_key=OPENAI_API_KEY)
-dspy.configure(lm=gpt3_turbo)
+gpt4turbo = dspy.OpenAI(model="gpt-4-turbo", max_tokens=300, api_key=OPENAI_API_KEY)
+dspy.configure(lm=gpt4turbo)
+
+income_statement = """
+# Conto Economico
+
+## Ricavi
+- **Ricavi delle vendite:** Vendite di tessuti, abbigliamento e accessori prodotti.
+- **Ricavi da servizi:** Entrate da servizi di design, consulenza, e post-vendita.
+
+## Costi della Produzione
+- **Costi delle materie prime:** Acquisto di filati, tessuti grezzi, e altri materiali.
+- **Costi del lavoro diretto:** Salari del personale di produzione.
+- **Costi di produzione indiretti:** Ammortamento delle attrezzature, manutenzione, energia elettrica.
+
+## Valore della Produzione
+- **Totale Ricavi**
+- **Meno: Costi della Produzione**
+
+## Risultato Operativo Lordo
+- **Margine Operativo Lordo:** Differenza tra il valore della produzione e i costi della produzione.
+
+## Spese Operative
+- **Spese Amministrative:** Salari del personale amministrativo, forniture d'ufficio.
+- **Spese di Vendita:** Pubblicità, commissioni ai venditori, spese di trasporto e distribuzione.
+- **Ricerca e Sviluppo:** Costi relativi allo sviluppo di nuovi prodotti o miglioramento dei prodotti esistenti.
+- **Ammortamenti:** Ammortamento degli impianti e delle attrezzature.
+
+## Risultato Operativo Netto
+- **Margine Operativo Netto:** Differenza tra il risultato operativo lordo e le spese operative.
+
+## Proventi e Oneri Finanziari
+- **Interessi Passivi:** Interessi su prestiti e finanziamenti.
+- **Interessi Attivi:** Interessi maturati su investimenti e depositi.
+
+## Risultato Prima delle Imposte
+- **Utile o Perdita Operativa:** Differenza tra il risultato operativo netto e i proventi e oneri finanziari.
+
+## Imposte sul Reddito
+- **Imposte sul reddito delle società**
+
+## Utile (Perdita) Netto/a
+- **Utile o Perdita Netto/a:** Differenza tra il risultato prima delle imposte e le imposte sul reddito.
+"""
 
 
 #####################
@@ -20,49 +62,9 @@ dspy.configure(lm=gpt3_turbo)
 
 
 class GenerateAnswer(dspy.Signature):
-    """Studia il seguente conto economico ed assegna la corretta categoria contabile (category) di conto economico all'elemento fornito (line_item).
+    """context, line_item -> answer"""
 
-    # Conto Economico Azienda Tessile
-
-    ## Ricavi
-    - **Ricavi delle vendite:** Vendite di tessuti, abbigliamento e accessori prodotti.
-    - **Ricavi da servizi:** Entrate da servizi di design, consulenza, e post-vendita.
-
-    ## Costi della Produzione
-    - **Costi delle materie prime:** Acquisto di filati, tessuti grezzi, e altri materiali.
-    - **Costi del lavoro diretto:** Salari del personale di produzione.
-    - **Costi di produzione indiretti:** Ammortamento delle attrezzature, manutenzione, energia elettrica.
-
-    ## Valore della Produzione
-    - **Totale Ricavi**
-    - **Meno: Costi della Produzione**
-
-    ## Risultato Operativo Lordo
-    - **Margine Operativo Lordo:** Differenza tra il valore della produzione e i costi della produzione.
-
-    ## Spese Operative
-    - **Spese Amministrative:** Salari del personale amministrativo, forniture d'ufficio.
-    - **Spese di Vendita:** Pubblicità, commissioni ai venditori, spese di trasporto e distribuzione.
-    - **Ricerca e Sviluppo:** Costi relativi allo sviluppo di nuovi prodotti o miglioramento dei prodotti esistenti.
-    - **Ammortamenti:** Ammortamento degli impianti e delle attrezzature.
-
-    ## Risultato Operativo Netto
-    - **Margine Operativo Netto:** Differenza tra il risultato operativo lordo e le spese operative.
-
-    ## Proventi e Oneri Finanziari
-    - **Interessi Passivi:** Interessi su prestiti e finanziamenti.
-    - **Interessi Attivi:** Interessi maturati su investimenti e depositi.
-
-    ## Risultato Prima delle Imposte
-    - **Utile o Perdita Operativa:** Differenza tra il risultato operativo netto e i proventi e oneri finanziari.
-
-    ## Imposte sul Reddito
-    - **Imposte sul reddito delle società**
-
-    ## Utile (Perdita) Netto/a
-    - **Utile o Perdita Netto/a:** Differenza tra il risultato prima delle imposte e le imposte sul reddito.
-    """
-
+    context = dspy.InputField(desc="Il conto economico dell'azienda tessile.")
     line_item = dspy.InputField(desc="L'elemento da categorizzare.")
     answer = dspy.OutputField(desc="La giusta categoria di conto economico.")
 
@@ -79,7 +81,7 @@ class AccountingCategoryAdvisor(dspy.Module):
         self.generate_answer = dspy.Predict(GenerateAnswer)
 
     def forward(self, line_item):
-        prediction = self.generate_answer(line_item=line_item)
+        prediction = self.generate_answer(context=income_statement, line_item=line_item)
         return dspy.Prediction(answer=prediction.answer)
 
 
@@ -89,25 +91,32 @@ class AccountingCategoryAdvisor(dspy.Module):
 
 
 # Define the signature for automatic assessments.
-class Assess(dspy.Signature):
+class Judge(dspy.Signature):
     """Assess the correctness of a classification task."""
 
-    assessed_text = dspy.InputField()
-    assessment_question = dspy.InputField()
-    assessment_answer = dspy.OutputField(desc="Yes or No")
+    context = dspy.InputField(
+        desc="Context for the prediction, the list of categories from the income statement."
+    )
+    question = dspy.InputField(desc="Item to be categorized.")
+    answer = dspy.InputField(desc="Answer to the categorization question.")
+    category_correct = dspy.OutputField(
+        desc="Is the categorization answer correct?", prefix="Category[Yes/No]:"
+    )
+
+
+judge = dspy.Predict(Judge)
 
 
 def metric(gold, pred, trace=None):
     line_item, category, answer = gold.line_item, gold.category, pred.answer
 
-    correct = f"The answer should classify the line item '{line_item}' in the category '{category}'."
+    # with dspy.context(lm=gpt4turbo):
+    #     correct = judge(context=income_statement, question=line_item, answer=answer)
 
-    with dspy.context(lm=gpt3_turbo):
-        correct = dspy.Predict(Assess)(
-            assessed_text=answer, assessment_question=correct
-        )
+    # correct = correct.category_correct.lower() == "yes"
 
-    correct = correct.assessment_answer.lower() == "yes"
+    correct = category == answer
+
     score = 1 if correct else 0
 
     if trace is not None:
@@ -334,7 +343,6 @@ testset = [
     for e in testdata
 ]
 
-# trainset = trainset.with_inputs("line_item").with_outputs("category")
 
 #####################
 # Optimize and compile the Model

@@ -1,6 +1,8 @@
 .venv
 local_cache
-vector-store
+vector-store-chroma
+vector-store-dspy
+vector-store-langchain
 
 .env
 *.log
