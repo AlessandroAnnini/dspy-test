@@ -1,15 +1,26 @@
+#####################
+# Imports
+#####################
 import os
 import chromadb
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import chromadb.utils.embedding_functions as embedding_functions
 from openai import OpenAI
 
+
+#####################
+# Constants
+#####################
 BOOK_PATH = "books/back-to-the-future-script.txt"
 BOOK_NAME = "Back to the Future"
 COLLECTION_NAME = BOOK_NAME.lower().replace(" ", "-")
 VECTOR_STORE = "./vector-store-chroma"
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
+
+#####################
+# ChromaDB setup
+#####################
 client = chromadb.PersistentClient(path=VECTOR_STORE)
 
 default_ef = embedding_functions.OpenAIEmbeddingFunction(
@@ -44,6 +55,10 @@ if collection is None:
         ids=ids,
     )
 
+
+#####################
+# ChromaDB Qery
+#####################
 result = collection.query(query_texts=["Who is Doc?"], n_results=3)
 
 client = OpenAI(api_key=OPENAI_API_KEY)

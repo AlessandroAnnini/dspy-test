@@ -1,3 +1,6 @@
+#####################
+# Imports
+#####################
 import os
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import dspy
@@ -6,15 +9,14 @@ from dspy.retrieve.chromadb_rm import ChromadbRM
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 
 
+#####################
+# Constants
+#####################
 BOOK_PATH = "books/back-to-the-future-script.txt"
 BOOK_NAME = "Back to the Future"
 COLLECTION_NAME = BOOK_NAME.lower().replace(" ", "-")
 VECTOR_STORE = "./vector-store-dspy"
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-
-
-# Set up the LM
-gpt3_turbo = dspy.OpenAI(model="gpt-3.5-turbo", max_tokens=300, api_key=OPENAI_API_KEY)
 
 
 #####################
@@ -54,6 +56,12 @@ retriever_model = ChromadbRM(
     embedding_function=embedding_function,
     k=5,
 )
+
+
+#####################
+# DSPy setup
+#####################
+gpt3_turbo = dspy.OpenAI(model="gpt-3.5-turbo", max_tokens=300, api_key=OPENAI_API_KEY)
 
 dspy.settings.configure(lm=gpt3_turbo, rm=retriever_model)
 

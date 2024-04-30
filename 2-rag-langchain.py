@@ -1,3 +1,6 @@
+#####################
+# Imports
+#####################
 import os
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
@@ -8,6 +11,9 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
 
+#####################
+# Constants
+#####################
 BOOK_PATH = "books/back-to-the-future-script.txt"
 BOOK_NAME = "Back to the Future"
 COLLECTION_NAME = BOOK_NAME.lower().replace(" ", "-")
@@ -15,6 +21,9 @@ VECTOR_STORE = "./vector-store-langchain"
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 
+#####################
+# ChromaDB setup
+#####################
 # if VECTOR_STORE does not exist, create it
 if not os.path.exists(VECTOR_STORE):
     f = open(BOOK_PATH)
@@ -37,6 +46,9 @@ else:
 
 retriever = vector_store.as_retriever()
 
+#####################
+# Langchain prompting
+#####################
 prompt = ChatPromptTemplate.from_template(
     """You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.
 Question: {question}
